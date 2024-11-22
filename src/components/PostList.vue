@@ -1,22 +1,27 @@
 <template>
   <div class="post-list">
-    <div v-for="post in posts" :key="post.id">
+    <input type="text" v-model="search" placeholder="Search blogs"> 
+    <div v-for="post in matchingPosts" :key="post.id">
       <SinglePost :post="post" />
     </div>
   </div>
 </template>
 
 <script>
-//import { onMounted, onUnmounted, onUpdated } from 'vue'
 
-// component imports
+import { ref, computed } from 'vue';
 import SinglePost from './SinglePost.vue'
 
 export default {
   props: ['posts'],
   components: { SinglePost },
-  setup() {
-
+  setup(props) {
+    const search = ref('')
+    search.value = ''
+    const matchingPosts = computed(() => {
+      return props.posts.filter((item) => item.title.includes(search.value))
+    })
+    return { matchingPosts, search }
   }
 }
 </script>

@@ -26,6 +26,6 @@ export default {
     load()
     
     return { posts, error }
-  },
+  }
 }
 </script>

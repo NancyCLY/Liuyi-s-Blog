@@ -3,24 +3,29 @@
     <router-link :to="{ name: 'Details', params: { id: post.id }}">
       <h3>{{ post.title }}</h3>
     </router-link>
-    <p>{{ snippet }}</p>
-    <span v-for="tag in post.tags" :key="tag">
-      #{{ tag }}
-    </span>
+    <p v-html="compiledMarkdown"></p>
+    <span v-for="tag in post.tags" :key="tag">#{{ tag }}</span>
   </div>
 </template>
 
 <script>
 import { computed } from 'vue'
+import _ from "lodash"
+import {marked} from "marked"
 
 export default {
   props: ['post'],
   setup(props) {
-    const snippet = computed(() => {
-      return props.post.body.substring(0, 100) + '...'
+
+    const compiledMarkdown = computed(( ) => {
+      return marked(props.post.body,{sanitize: true});
     })
 
-    return { snippet }
+    /*const snippet = computed(() => {
+      return compiledMarkdown.substring(0, 100) + '...'
+    })*/
+
+    return { compiledMarkdown}
   }
 }
 </script>
@@ -50,5 +55,9 @@ export default {
     padding-right: 40px;
     left: -30px;
     transform: rotateZ(-1deg);
+  }
+  p{
+    max-height: 100px;
+    overflow: hidden;
   }
 </style>

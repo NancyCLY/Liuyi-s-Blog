@@ -4,7 +4,10 @@
       <label>Title:</label>
       <input v-model="title" type="text" required>
       <label>Content:</label>
-      <textarea v-model="body" required></textarea>
+      <div id="editor" >
+        <textarea v-model="body"></textarea>
+        <div v-html="compiledMarkdown"></div>
+      </div>
       <label>Tags (hit enter to add a tag):</label>
       <input 
         @keydown.enter.prevent="handleKeydown" 
@@ -20,8 +23,11 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import _ from "lodash"
+import {marked} from "marked"
+import { projectFirestore, timestamp } from '@/firebase/config';
 
 export default {
   setup() {
@@ -29,6 +35,10 @@ export default {
     const body = ref('')
     const tags = ref([])
     const tag = ref('')
+
+    const compiledMarkdown = computed(( ) => {
+      return marked(body.value,{sanitize: true});
+    })
 
     const router = useRouter()
 
@@ -45,20 +55,22 @@ export default {
         id: Math.floor(Math.random() * 10000),
         title: title.value,
         body: body.value,
-        tags: tags.value
+        tags: tags.value,
+        createdAt: timestamp()
       }
 
-      await fetch('http://localhost:3000/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json'},
-        body: JSON.stringify(post)
-      })
+      const res = await projectFirestore.collection('posts').add(post)
 
       router.push({ name: 'Home' })
     }
 
-    return { body, title, tags, tag, handleKeydown, handleSubmit }
+    return { body, title, tags, tag, handleKeydown, handleSubmit, compiledMarkdown }
   },
+  methods: {
+    update: _.debounce(function(e) {
+      this.input.value = e.target.value;
+    }, 300)
+  }
 }
 </script>
 
@@ -68,7 +80,7 @@ export default {
     margin: 0 auto;
     text-align: left;
   }
-  input, textarea {
+  input {
     display: block;
     margin: 10px 0;
     width: 100%;
@@ -76,9 +88,28 @@ export default {
     padding: 10px;
     border: 1px solid #eee;
   }
+  
+  textarea,
+  #editor div {
+   display: inline-block;
+   width: 100%;
+   height: 100%;
+   vertical-align: top;
+   box-sizing: border-box;
+   padding: 0 20px;
+ }
+
   textarea {
-    height: 160px;
+  border: none;
+  border-right: 1px solid #ccc;
+  resize: none;
+  outline: none;
+  background-color: #f6f6f6;
+  font-size: 14px;
+  font-family: "Monaco", courier, monospace;
+  padding: 20px;
   }
+
   label {
     display: inline-block;
     margin-top: 30px;
